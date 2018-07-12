@@ -116,7 +116,7 @@ def process():
 
     app.logger.info('received image %dx%d', img.shape[0], img.shape[1])
 
-    patch_size = 32  # will come from post params
+    patch_size = 8  # will come from post params
     img = catsup(img, patch_size)
 
     _, img = cv2.imencode('.' + request.files['data'].filename.split('.')[-1],
