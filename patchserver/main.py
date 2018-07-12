@@ -18,8 +18,6 @@ from PIL import Image, ImageSequence
 from patchies.index import img_index
 from patchies.pipeline import cats, make_mosaic
 
-logging.basicConfig(level=logging.DEBUG)
-
 
 @contextlib.contextmanager
 def index_from_config(conf, patch_size):
@@ -71,6 +69,7 @@ def _check_data(config):
 def create_app():
     """check the preprocessed data is all present and correct and then make the
     app. Also injects the config."""
+    logging.basicConfig(level=logging.INFO)
     config = _get_config_from_env()
     # make sure it errors out if someone's being unpleasant
     warnings.simplefilter('error', Image.DecompressionBombWarning)
@@ -92,16 +91,13 @@ def _slice_params(axis, factor):
     return start, end
 
 
-def catsup(img, patch_size):
+def catsup(index, data, img, patch_size):
     """cat a single image."""
     img = np.array(img)
-    app.logger.info('expecting cats to be at %s', app.config['cats_path'])
-    with index_from_config(app.config, patch_size) as stuff:
-        index, data = stuff
-        x_start, x_end = _slice_params(img.shape[0], patch_size)
-        y_start, y_end = _slice_params(img.shape[1], patch_size)
-        img = img[x_start:x_end, y_start:y_end, :]
-        img = make_mosaic(index, img, patch_size, data)
+    x_start, x_end = _slice_params(img.shape[0], patch_size)
+    y_start, y_end = _slice_params(img.shape[1], patch_size)
+    img = img[x_start:x_end, y_start:y_end, :]
+    img = make_mosaic(index, img, patch_size, data)
     # re-PIL it
     return Image.fromarray(img)
 
@@ -113,22 +109,34 @@ def process():
         app.logger.info('no files found in post')
         return 'nope'
 
+    extension = request.files['data'].filename.split('.')[-1]
     img = Image.open(request.files['data'])
-
-    if img is None:
-        app.logger.info('could not decode image?')
-        return
 
     app.logger.info('received image %dx%d', img.size[0], img.size[1])
 
     patch_size = 16  # will come from post params
-    img = catsup(img, patch_size)
+    app.logger.info('expecting cats to be at %s', app.config['cats_path'])
+    with index_from_config(app.config, patch_size) as stuff:
+        index, data = stuff
+        frames = [
+            catsup(index, data, frame.convert('RGB'), patch_size)
+            for frame in ImageSequence.Iterator(img)
+        ]
+        app.logger.info('%d frame%s', len(frames), 's'
+                        if len(frames) > 1 else '')
 
-    extension = request.files['data'].filename.split('.')[-1]
-    # _, img = cv2.imencode('.' + request.files['data'].filename.split('.')[-1],
-    #                       img)
     img_bytes = io.BytesIO()
-    img.save(img_bytes, format=extension)
+    if len(frames) > 1:
+        # for gif we are going to have to convert back to paletted
+        frames[0].save(
+            img_bytes,
+            format=extension,
+            append_images=frames[1:],
+            save_all=True,
+            loop=img.info.get('loop', None),
+            duration=img.info.get('duration', 20))
+    else:
+        frames[0].save(img_bytes, format=extension)
     # get back to the start of the fake file to send it
     img_bytes.seek(0)
 
