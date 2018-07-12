@@ -1,0 +1,134 @@
+"""
+Server that provides endpoints for taking images, cattering them into
+submission and sending them back.
+"""
+import contextlib
+import io
+import logging
+import multiprocessing
+import os
+from functools import partial
+
+import cv2
+import flask
+import numpy as np
+from flask import Flask, Response, request
+
+from patchies.index import img_index
+from patchies.pipeline import cats, make_mosaic
+
+logging.basicConfig(level=logging.DEBUG)
+
+
+@contextlib.contextmanager
+def index_from_config(conf, patch_size):
+    """get an image index context manager with a bunch of default HNSW
+    parameters."""
+    index_path = os.path.join(conf['index_path'],
+                              'cats-{}-index.bin'.format(patch_size))
+    creation_params = {
+        'M': 50,
+        'indexThreadQty': multiprocessing.cpu_count(),
+        'efConstruction': 400,
+        'post': 2,
+        'skip_optimized_index': 1
+    }
+    query_params = {'efSearch': 200}
+    loader = partial(cats, conf['cats_path'], patch_size)
+    with img_index(
+            index_path,
+            loader,
+            construction_args=creation_params,
+            query_args=query_params) as stuff:
+        yield stuff
+
+
+def _get_config_from_env():
+    """Get config from environment variables if possible. Tries to populate
+    sensible defaults, if that fails raises an error."""
+    levels = os.getenv('LEVELS', '2,4,8,16,32,64,128')
+    levels = [int(l) for l in levels.split(',')]
+    return {
+        'cats_path': os.getenv('CATS_PATH', '/cats/raw'),
+        'index_path': os.getenv('INDEX_PATH', '/cats/indices'),
+        'levels': levels
+    }
+
+
+def _check_data(config):
+    """Check the pre-processed data exists where it should (just by asking for
+    it)"""
+    logging.info('checking that the data is ok')
+    logging.info('cats should be in `%s`', config['cats_path'])
+    logging.info('indices should be in `%s`', config['index_path'])
+    for patch_size in config['levels']:
+        logging.info('checking level %d', patch_size)
+        with index_from_config(config, patch_size) as (_, data):
+            logging.info('~~~~~~~shape %s', data.shape)
+
+
+def create_app():
+    """check the preprocessed data is all present and correct and then make the
+    app. Also injects the config."""
+    config = _get_config_from_env()
+    _check_data(config)
+    app = Flask(__name__)
+    app.config.update(config)
+    return app
+
+
+app = create_app()
+
+
+def _slice_params(axis, factor):
+    """Get the start and stop indices to slice a dimension of size `axis` into
+    a multiple of `factor`, keeping it centered."""
+    new_size = (axis // factor) * factor
+    start = (axis - new_size) // 2
+    end = axis - (axis - new_size - start)
+    return start, end
+
+
+def catsup(img, patch_size):
+    """cat an image"""
+    app.logger.info('expecting cats to be at %s', app.config['cats_path'])
+    with index_from_config(app.config, patch_size) as stuff:
+        index, data = stuff
+        x_start, x_end = _slice_params(img.shape[0], patch_size)
+        y_start, y_end = _slice_params(img.shape[1], patch_size)
+        img = img[x_start:x_end, y_start:y_end, :]
+        return make_mosaic(index, img, patch_size, data)
+
+
+@app.route('/caterise', methods=['POST'])
+def process():
+    """Take an encoded image, spray cats all over it, return"""
+    if not request.files:
+        app.logger.info('no files found in post')
+        return 'nope'
+
+    img = np.fromstring(request.files['data'].read(), dtype=np.uint8)
+    img = cv2.imdecode(img, cv2.IMREAD_COLOR)
+
+    if img is None:
+        app.logger.info('could not decode image?')
+        return
+
+    app.logger.info('received image %dx%d', img.shape[0], img.shape[1])
+
+    patch_size = 32  # will come from post params
+    img = catsup(img, patch_size)
+
+    _, img = cv2.imencode('.' + request.files['data'].filename.split('.')[-1],
+                          img)
+    img = io.BytesIO(img)
+
+    return flask.send_file(
+        img,
+        mimetype='image/png',
+        attachment_filename=request.files['data'].filename,
+        as_attachment=True)
+
+
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0')
