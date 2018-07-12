@@ -1,3 +1,4 @@
+pybind11
 git+https://github.com/pfcm/patchies
 flask
-pybind11
+pillow

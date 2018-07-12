@@ -7,12 +7,13 @@ import io
 import logging
 import multiprocessing
 import os
+import warnings
 from functools import partial
 
-import cv2
 import flask
 import numpy as np
-from flask import Flask, Response, request
+from flask import Flask, request
+from PIL import Image, ImageSequence
 
 from patchies.index import img_index
 from patchies.pipeline import cats, make_mosaic
@@ -46,7 +47,7 @@ def index_from_config(conf, patch_size):
 def _get_config_from_env():
     """Get config from environment variables if possible. Tries to populate
     sensible defaults, if that fails raises an error."""
-    levels = os.getenv('LEVELS', '2,4,8,16,32,64,128')
+    levels = os.getenv('LEVELS', '2,4,8,16,32,64')
     levels = [int(l) for l in levels.split(',')]
     return {
         'cats_path': os.getenv('CATS_PATH', '/cats/raw'),
@@ -71,10 +72,12 @@ def create_app():
     """check the preprocessed data is all present and correct and then make the
     app. Also injects the config."""
     config = _get_config_from_env()
+    # make sure it errors out if someone's being unpleasant
+    warnings.simplefilter('error', Image.DecompressionBombWarning)
     _check_data(config)
-    app = Flask(__name__)
-    app.config.update(config)
-    return app
+    application = Flask(__name__)
+    application.config.update(config)
+    return application
 
 
 app = create_app()
@@ -90,14 +93,17 @@ def _slice_params(axis, factor):
 
 
 def catsup(img, patch_size):
-    """cat an image"""
+    """cat a single image."""
+    img = np.array(img)
     app.logger.info('expecting cats to be at %s', app.config['cats_path'])
     with index_from_config(app.config, patch_size) as stuff:
         index, data = stuff
         x_start, x_end = _slice_params(img.shape[0], patch_size)
         y_start, y_end = _slice_params(img.shape[1], patch_size)
         img = img[x_start:x_end, y_start:y_end, :]
-        return make_mosaic(index, img, patch_size, data)
+        img = make_mosaic(index, img, patch_size, data)
+    # re-PIL it
+    return Image.fromarray(img)
 
 
 @app.route('/caterise', methods=['POST'])
@@ -107,25 +113,28 @@ def process():
         app.logger.info('no files found in post')
         return 'nope'
 
-    img = np.fromstring(request.files['data'].read(), dtype=np.uint8)
-    img = cv2.imdecode(img, cv2.IMREAD_COLOR)
+    img = Image.open(request.files['data'])
 
     if img is None:
         app.logger.info('could not decode image?')
         return
 
-    app.logger.info('received image %dx%d', img.shape[0], img.shape[1])
+    app.logger.info('received image %dx%d', img.size[0], img.size[1])
 
-    patch_size = 8  # will come from post params
+    patch_size = 16  # will come from post params
     img = catsup(img, patch_size)
 
-    _, img = cv2.imencode('.' + request.files['data'].filename.split('.')[-1],
-                          img)
-    img = io.BytesIO(img)
+    extension = request.files['data'].filename.split('.')[-1]
+    # _, img = cv2.imencode('.' + request.files['data'].filename.split('.')[-1],
+    #                       img)
+    img_bytes = io.BytesIO()
+    img.save(img_bytes, format=extension)
+    # get back to the start of the fake file to send it
+    img_bytes.seek(0)
 
     return flask.send_file(
-        img,
-        mimetype='image/png',
+        img_bytes,
+        mimetype='image/{}'.format(extension),
         attachment_filename=request.files['data'].filename,
         as_attachment=True)
 
