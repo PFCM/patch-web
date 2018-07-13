@@ -137,7 +137,7 @@ def process():
             append_images=frames[1:],
             save_all=True,
             loop=img.info.get('loop', None),
-            duration=img.info.get('duration', 20))
+            duration=img.info.get('duration', 200))
     else:
         frames[0].save(img_bytes, format=extension)
     # get back to the start of the fake file to send it
