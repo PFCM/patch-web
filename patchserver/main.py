@@ -114,7 +114,10 @@ def process():
 
     app.logger.info('received image %dx%d', img.size[0], img.size[1])
 
-    patch_size = 32  # will come from post params
+    patch_size = int(request.form.get('patch_size', 32))
+    if patch_size not in app.config['levels']:
+        app.logger.info('invalid request for patch size %d', patch_size)
+        return 'nope'
     app.logger.info('expecting cats to be at %s', app.config['cats_path'])
     with index_from_config(app.config, patch_size) as stuff:
         index, data = stuff
