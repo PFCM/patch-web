@@ -32,7 +32,7 @@ def index_from_config(conf, patch_size):
         'post': 2,
         'skip_optimized_index': 1
     }
-    query_params = {'efSearch': 200}
+    query_params = {'efSearch': 100}
     loader = partial(cats, conf['cats_path'], patch_size)
     with img_index(
             index_path,
@@ -114,7 +114,7 @@ def process():
 
     app.logger.info('received image %dx%d', img.size[0], img.size[1])
 
-    patch_size = 16  # will come from post params
+    patch_size = 32  # will come from post params
     app.logger.info('expecting cats to be at %s', app.config['cats_path'])
     with index_from_config(app.config, patch_size) as stuff:
         index, data = stuff
