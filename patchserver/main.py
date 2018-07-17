@@ -113,7 +113,10 @@ def process():
     img = Image.open(request.files['data'])
 
     app.logger.info('received image %dx%d', img.size[0], img.size[1])
-
+    if 'patch_size' in request.form:
+        app.logger.info('requested patch size: %s', request.form['patch_size'])
+    else:
+        app.logger.info('no patch size specified, using 32')
     patch_size = int(request.form.get('patch_size', 32))
     if patch_size not in app.config['levels']:
         app.logger.info('invalid request for patch size %d', patch_size)
@@ -139,6 +142,9 @@ def process():
             loop=img.info.get('loop', None),
             duration=img.info.get('duration', 200))
     else:
+        # NOTE: this is a bit dumb
+        if extension == 'jpg':
+            extension = 'jpeg'
         frames[0].save(img_bytes, format=extension)
     # get back to the start of the fake file to send it
     img_bytes.seek(0)

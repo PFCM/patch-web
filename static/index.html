@@ -9,7 +9,22 @@
   <form action="/caterise" method="post" enctype="multipart/form-data">
     <div>
       <label for="file">Upload an image</label>
-      <input type="file" id="file" name="data">
+      <input type="file" id="file" name="data"/>
+    </div>
+    <div>
+      <label>Cat size</label>
+      <input type="radio" id="two" name="patch_size" value="2"/>
+      <label for="two">2</label>
+      <input type="radio" id="four" name="patch_size" value="4"/>
+      <label for="four">4</label>
+      <input type="radio" id="eight" name="patch_size" value="8"/>
+      <label for="eight">8</label>
+      <input type="radio" id="sixteen" name="patch_size" value="16"/>
+      <label for="sixteen">16</label>
+      <input type="radio" id="thirty-two" name="patch_size" value="32" checked/>
+      <label for="thirty-two">32</label>
+      <input type="radio" id="sixty-four" name="patch_size" value="64"/>
+      <label for="sixty-four">64</label>
     </div>
     <div>
       <button>cat</button>
