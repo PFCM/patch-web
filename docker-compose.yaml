@@ -1,0 +1,9 @@
+version: '3'
+services:
+  caterise:
+    build: .
+    ports:
+      - "80:80"
+    volumes:
+      - /home/pfcm/cats/raw:/cats/raw
+      - /home/pfcm/cats/indices:/cats/indices
