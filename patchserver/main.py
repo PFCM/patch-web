@@ -108,8 +108,6 @@ def process():
     if not request.files:
         app.logger.info('no files found in post')
         return 'nope'
-
-    extension = request.files['data'].filename.split('.')[-1]
     img = Image.open(request.files['data'])
 
     app.logger.info('received image %dx%d', img.size[0], img.size[1])
@@ -136,22 +134,20 @@ def process():
         # for gif we are going to have to convert back to paletted
         frames[0].save(
             img_bytes,
-            format=extension,
+            format=img.format,
             append_images=frames[1:],
             save_all=True,
             loop=img.info.get('loop', None),
             duration=img.info.get('duration', 200))
     else:
         # NOTE: this is a bit dumb
-        if extension == 'jpg':
-            extension = 'jpeg'
-        frames[0].save(img_bytes, format=extension)
+        frames[0].save(img_bytes, format=img.format)
     # get back to the start of the fake file to send it
     img_bytes.seek(0)
 
     return flask.send_file(
         img_bytes,
-        mimetype='image/{}'.format(extension),
+        mimetype=Image.MIME[img.format],
         attachment_filename=request.files['data'].filename,
         as_attachment=True)
 
