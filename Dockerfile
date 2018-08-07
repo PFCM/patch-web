@@ -11,6 +11,7 @@ RUN rm requirements.txt
 
 # get the app in the right place for nginx and uwsgi
 COPY ./patchserver /app
+COPY ./prestart.sh /app/prestart.sh
 COPY ./static /app/static
 COPY ./uwsgi.ini /app/uwsgi.ini
 
