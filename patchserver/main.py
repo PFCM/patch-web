@@ -137,7 +137,7 @@ def process():
             format=img.format,
             append_images=frames[1:],
             save_all=True,
-            loop=img.info.get('loop', None),
+            loop=img.info.get('loop', 0),
             duration=img.info.get('duration', 200))
     else:
         # NOTE: this is a bit dumb
