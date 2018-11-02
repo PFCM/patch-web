@@ -1,0 +1,3 @@
+# may have precompiled binaries from the wrong OS
+**/node_modules
+**/elm-stuff

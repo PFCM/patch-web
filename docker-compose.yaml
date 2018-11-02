@@ -1,0 +1,16 @@
+version:     '3'
+services:
+  caterise:
+    build:   ./patchserver
+    expose:
+      - "80"
+    volumes:
+      - /Users/pfcm/Documents/cats_data/raw:/cats/raw
+      - /Users/pfcm/Documents/cats_data/indices:/cats/indices
+  caterate:
+    build:   ./caterator
+    ports:
+      - "3000:3000"
+    volumes:
+        - ./caterator/src:/app/src
+        - ./caterator/public:/app/public

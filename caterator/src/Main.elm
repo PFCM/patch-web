@@ -139,18 +139,33 @@ imagePreview imgData default =
         ]
 
 
+isNothing : Maybe a -> Bool
+isNothing mayb =
+    case mayb of
+        Just _ ->
+            False
+
+        Nothing ->
+            True
+
+
 view : Model -> Html Msg
 view model =
     div []
         [ h1 []
-            [ text "are you my friend?" ]
+            [ text "r you my friend?" ]
         , div
             [ class "upload-wrapper" ]
             [ sizeRadios sizes
             , div
                 [ style "display" "flex", style "height" "25em" ]
                 [ imagePreview model.imageInputData "%PUBLIC_URL%/jeff.gif"
-                , imagePreview model.imageResultData "%PUBLIC_URL%/cats.gif"
+                , imagePreview model.imageResultData <|
+                    if isNothing model.imageInputData then
+                        "%PUBLIC_URL%/cats.gif"
+
+                    else
+                        "%PUBLIC_URL%/baseline-photo-24px.svg"
                 ]
             , div
                 [ style "display" "flex" ]
