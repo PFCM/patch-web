@@ -5,9 +5,10 @@ import Debug
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (on, onClick)
-import Json.Decode as JD
+import Http
+import Json.Decode as Decode
 import Maybe as M
-import Ports exposing (ImagePortData, fileContentRead, fileSelected)
+import Ports exposing (ImagePortData, fileContentRead, fileSelected, imageToValue)
 import String
 
 
@@ -19,12 +20,17 @@ type alias Model =
     { catSize : Int
     , imageInputData : Maybe ImagePortData
     , imageResultData : Maybe ImagePortData
+    , error : Maybe Http.Error
     }
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { catSize = 32, imageInputData = Nothing, imageResultData = Nothing }
+    ( { catSize = 32
+      , imageInputData = Nothing
+      , imageResultData = Nothing
+      , error = Nothing
+      }
     , Cmd.none
     )
 
@@ -37,6 +43,8 @@ type Msg
     = ChangeCatSize Int
     | ImageSelected
     | ImageRead ImagePortData
+    | MakeCatHappen
+    | CatHappened (Result Http.Error ImagePortData)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -46,10 +54,45 @@ update msg model =
             ( { model | catSize = newSize }, Cmd.none )
 
         ImageSelected ->
-            ( model, fileSelected <| Debug.log "image input changed: " imageInputId )
+            ( model, fileSelected imageInputId )
 
         ImageRead newData ->
             ( { model | imageInputData = Just newData }, Cmd.none )
+
+        MakeCatHappen ->
+            ( model, requestCattery model )
+
+        CatHappened res ->
+            case res of
+                Ok img ->
+                    ( { model | imageResultData = Just img }, Cmd.none )
+
+                Err why ->
+                    ( { model | error = Just why }, Cmd.none )
+
+
+imageDecoder : Decode.Decoder ImagePortData
+imageDecoder =
+    Decode.map2 ImagePortData
+        (Decode.field "contents" Decode.string)
+        (Decode.field "filename" Decode.string)
+
+
+requestCattery : Model -> Cmd Msg
+requestCattery model =
+    case model.imageInputData of
+        Just inp ->
+            let
+                body =
+                    Http.jsonBody << imageToValue <| inp
+
+                request =
+                    Http.post "%BACKEND_URL%/caterise" body imageDecoder
+            in
+            Http.send CatHappened request
+
+        Nothing ->
+            Cmd.none
 
 
 
@@ -96,7 +139,7 @@ imageInput =
         [ input
             [ type_ "file"
             , id imageInputId
-            , on "change" (JD.succeed ImageSelected)
+            , on "change" (Decode.succeed ImageSelected)
             ]
             []
         ]
@@ -105,7 +148,7 @@ imageInput =
 catButton : Model -> Html Msg
 catButton model =
     div [ class "cat-button-wrapper", style "width" "50%" ]
-        [ button [] [ text "🐈" ] ]
+        [ button [ onClick MakeCatHappen ] [ text "🐈" ] ]
 
 
 imagePreview : Maybe ImagePortData -> String -> Html Msg
@@ -153,7 +196,7 @@ view : Model -> Html Msg
 view model =
     div []
         [ h1 []
-            [ text "r you my friend?" ]
+            [ text "hello" ]
         , div
             [ class "upload-wrapper" ]
             [ sizeRadios sizes
@@ -166,12 +209,47 @@ view model =
 
                     else
                         "%PUBLIC_URL%/baseline-photo-24px.svg"
+                , errorDiv model.error
                 ]
             , div
                 [ style "display" "flex" ]
                 [ imageInput, catButton model ]
             ]
         ]
+
+
+errorDiv : Maybe Http.Error -> Html msg
+errorDiv err =
+    div
+        [ class "error-bar"
+        , style "display" <|
+            if isNothing err then
+                "none"
+
+            else
+                "block"
+        ]
+    <|
+        case err of
+            Just what ->
+                case what of
+                    Http.BadUrl url ->
+                        [ text url ]
+
+                    Http.Timeout ->
+                        [ text "cattering timed out :(" ]
+
+                    Http.NetworkError ->
+                        [ text "connection failed :(" ]
+
+                    Http.BadStatus resp ->
+                        [ text ("Error: " ++ String.fromInt resp.status.code) ]
+
+                    Http.BadPayload _ _ ->
+                        [ text "couldn't handle response" ]
+
+            Nothing ->
+                []
 
 
 subscriptions : Model -> Sub Msg

@@ -18,7 +18,7 @@ app.ports.fileSelected.subscribe(function (id) {
   var reader = new FileReader();
   console.log('made a reader etc')
   reader.onload = (function(event) {
-    console.log('should have loaded: ' + file.name)
+    console.log('should have loaded: ' + file.name);
     var encoded = event.target.result;
     var portData = {
       contents: encoded,
