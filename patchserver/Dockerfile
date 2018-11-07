@@ -10,6 +10,7 @@ RUN pip install -r requirements.txt
 RUN rm requirements.txt
 
 # get the app in the right place for nginx and uwsgi
+COPY ./nginx_cors.conf /etc/nginx/conf.d/cors.conf
 COPY ./patchserver /app
 COPY ./prestart.sh /app/prestart.sh
 COPY ./static /app/static

@@ -1,14 +1,16 @@
-version:     '3'
+version:       '3'
 services:
   caterise:
-    build:   ./patchserver
-    expose:
-      - "80"
+    build:
+      context: ./patchserver
+    ports:
+      - "8000:80"
     volumes:
       - /Users/pfcm/Documents/cats_data/raw:/cats/raw
       - /Users/pfcm/Documents/cats_data/indices:/cats/indices
   caterate:
-    build:   ./caterator
+    build:
+      context: ./caterator
     ports:
       - "3000:3000"
     volumes:
