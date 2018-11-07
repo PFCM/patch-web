@@ -1,18 +1,22 @@
-version:       '3'
+version:           '3'
 services:
   caterise:
     build:
-      context: ./patchserver
+      context:     ./patchserver
     ports:
       - "8000:80"
     volumes:
       - /Users/pfcm/Documents/cats_data/raw:/cats/raw
       - /Users/pfcm/Documents/cats_data/indices:/cats/indices
+    environment:
+      ENVIRONMENT: dev
   caterate:
     build:
-      context: ./caterator
+      context:     ./caterator
     ports:
       - "3000:3000"
     volumes:
         - ./caterator/src:/app/src
         - ./caterator/public:/app/public
+    depends_on:
+      - caterise

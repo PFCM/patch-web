@@ -2,11 +2,13 @@
 Server that provides endpoints for taking images, cattering them into
 submission and sending them back.
 """
+import base64
 import contextlib
 import io
 import logging
 import multiprocessing
 import os
+import re
 import warnings
 from functools import partial
 
@@ -102,13 +104,9 @@ def catsup(index, data, img, patch_size):
     return Image.fromarray(img)
 
 
-@app.route('/caterise', methods=['POST'])
-def process():
-    """Take an encoded image, spray cats all over it, return"""
-    if not request.files:
-        app.logger.info('no files found in post')
-        return 'nope'
-    img = Image.open(request.files['data'])
+def process_image(img_file):
+    """process a file-like object as an image"""
+    img = Image.open(img_file)
 
     app.logger.info('received image %dx%d', img.size[0], img.size[1])
     if 'patch_size' in request.form:
@@ -145,9 +143,32 @@ def process():
     # get back to the start of the fake file to send it
     img_bytes.seek(0)
 
+    return img_bytes, img.format
+
+
+@app.route('/caterise', methods=['POST'])
+def process():
+    """Take an encoded image, spray cats all over it, return"""
+    if not request.files:
+        app.logger.info('no files found in post, treating as json')
+        contents = re.sub(r'data:image/.+;base64', '',
+                          request.json['contents'])
+        contents = base64.b64decode(contents)
+        img_bytes, format = process_image(io.BytesIO(contents))
+        contents = base64.b64encode(img_bytes.getvalue()).decode('utf-8')
+        contents = 'data:image/{};charset=utf-8;base64,{}'.format(
+            format.lower(), contents)
+        return flask.jsonify({
+            'contents': contents,
+            'filename': format,
+            'mime_type': format
+        })
+
+    img_bytes, format = process_image(request.files['data'])
+
     return flask.send_file(
         img_bytes,
-        mimetype=Image.MIME[img.format],
+        mimetype=Image.MIME[format],
         attachment_filename=request.files['data'].filename,
         as_attachment=True)
 
