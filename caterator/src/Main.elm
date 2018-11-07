@@ -8,7 +8,13 @@ import Html.Events exposing (on, onClick)
 import Http
 import Json.Decode as Decode
 import Maybe as M
-import Ports exposing (ImagePortData, fileContentRead, fileSelected, imageToValue)
+import Ports
+    exposing
+        ( ImagePortData
+        , fileContentRead
+        , fileSelected
+        , imageToValue
+        )
 import String
 
 
@@ -21,6 +27,7 @@ type alias Model =
     , imageInputData : Maybe ImagePortData
     , imageResultData : Maybe ImagePortData
     , error : Maybe Http.Error
+    , waiting : Bool
     }
 
 
@@ -30,6 +37,7 @@ init _ =
       , imageInputData = Nothing
       , imageResultData = Nothing
       , error = Nothing
+      , waiting = False
       }
     , Cmd.none
     )
@@ -60,15 +68,19 @@ update msg model =
             ( { model | imageInputData = Just newData }, Cmd.none )
 
         MakeCatHappen ->
-            ( model, requestCattery model )
+            ( { model | waiting = True }, requestCattery model )
 
         CatHappened res ->
             case res of
                 Ok img ->
-                    ( { model | imageResultData = Just img }, Cmd.none )
+                    ( { model | imageResultData = Just img, waiting = False }
+                    , Cmd.none
+                    )
 
                 Err why ->
-                    ( { model | error = Just why }, Cmd.none )
+                    ( { model | error = Just why, waiting = False }
+                    , Cmd.none
+                    )
 
 
 imageDecoder : Decode.Decoder ImagePortData
@@ -147,8 +159,18 @@ imageInput =
 
 catButton : Model -> Html Msg
 catButton model =
-    div [ class "cat-button-wrapper", style "width" "50%" ]
-        [ button [ onClick MakeCatHappen ] [ text "🐈" ] ]
+    let
+        noInput =
+            isNothing <| model.imageInputData
+
+        notActive =
+            noInput || model.waiting
+
+        attrs =
+            [ class "cat-button-wrapper", style "width" "50%" ]
+    in
+    div attrs
+        [ button [ onClick MakeCatHappen, disabled notActive ] [ text "🐈" ] ]
 
 
 imagePreview : Maybe ImagePortData -> String -> Html Msg
