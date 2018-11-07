@@ -16,8 +16,9 @@ const publicPath = '/';
 // as %PUBLIC_URL% in `index.html` and `process.env.PUBLIC_URL` in JavaScript.
 // Omit trailing slash as %PUBLIC_URL%/xyz looks better than %PUBLIC_URL%xyz.
 const publicUrl = '';
+const backendUrl = 'localhost:8000';
 // Get environment variables to inject into our app.
-const env = getClientEnvironment(publicUrl);
+const env = getClientEnvironment(publicUrl, backendUrl);
 
 // This is the development configuration.
 // It is focused on developer experience and fast rebuilds.
@@ -162,11 +163,15 @@ module.exports = {
           // module system.
           {
             loader: require.resolve('string-replace-loader'),
-            query: {
+            options: {multiple: [{
               search: '%PUBLIC_URL%',
               replace: publicUrl,
               flags: 'g'
-            }
+            }, {
+              search: '%BACKEND_URL%',
+              replace: backendUrl,
+              flags: 'g'
+            }]}
           },
           {
             loader: require.resolve('elm-webpack-loader'),

@@ -57,7 +57,7 @@ process.env.NODE_PATH = (process.env.NODE_PATH || '')
 // injected into the application via DefinePlugin in Webpack configuration.
 const ELM_APP = /^ELM_APP_/i;
 
-function getClientEnvironment(publicUrl) {
+function getClientEnvironment(publicUrl, backendUrl) {
   const raw = Object.keys(process.env)
     .filter(key => ELM_APP.test(key))
     .reduce(
@@ -72,7 +72,8 @@ function getClientEnvironment(publicUrl) {
         // For example, <img src={process.env.PUBLIC_URL + '/img/logo.png'} />.
         // This should only be used as an escape hatch. Normally you would put
         // images into the `src` and `import` them in code to get their paths.
-        PUBLIC_URL: publicUrl
+        PUBLIC_URL: publicUrl,
+        BACKEND_URL: backendUrl
       }
     );
   // Stringify all values so we can feed into Webpack DefinePlugin
