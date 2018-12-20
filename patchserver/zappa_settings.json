@@ -1,0 +1,9 @@
+{
+    "dev": {
+        "app_function": "patchserver.main.app",
+        "profile_name": "personal",
+        "project_name": "patchserver",
+        "runtime": "python3.6",
+        "s3_bucket": "patchies-zappa"
+    }
+}
