@@ -5,6 +5,7 @@ submission and sending them back.
 import base64
 import contextlib
 import io
+import json
 import logging
 import multiprocessing
 import os
@@ -68,7 +69,7 @@ def _check_data(config):
             logging.info('~~~~~~~shape %s', data.shape)
 
 
-def create_app():
+def create_app(app_cls):
     """check the preprocessed data is all present and correct and then make the
     app. Also injects the config."""
     logging.basicConfig(level=logging.INFO)
@@ -76,12 +77,9 @@ def create_app():
     # make sure it errors out if someone's being unpleasant
     warnings.simplefilter('error', Image.DecompressionBombWarning)
     _check_data(config)
-    application = Flask(__name__)
+    application = app_cls(__name__)
     application.config.update(config)
     return application
-
-
-app = create_app()
 
 
 def _slice_params(axis, factor):
@@ -104,19 +102,15 @@ def catsup(index, data, img, patch_size):
     return Image.fromarray(img)
 
 
-def process_image(img_file):
+def process_image(img_file, patch_size):
     """process a file-like object as an image"""
     img = Image.open(img_file)
 
     app.logger.info('received image %dx%d', img.size[0], img.size[1])
-    if 'patch_size' in request.form:
-        app.logger.info('requested patch size: %s', request.form['patch_size'])
-    else:
-        app.logger.info('no patch size specified, using 32')
-    patch_size = int(request.form.get('patch_size', 32))
+    app.logger.info('using patch size %d', patch_size)
     if patch_size not in app.config['levels']:
         app.logger.info('invalid request for patch size %d', patch_size)
-        return 'nope'
+        return None, 'invalid patch size'
     app.logger.info('expecting cats to be at %s', app.config['cats_path'])
     with index_from_config(app.config, patch_size) as stuff:
         index, data = stuff
@@ -146,32 +140,43 @@ def process_image(img_file):
     return img_bytes, img.format
 
 
+def process_json(req):
+    """Handle json POST requests to the endpoint. Assumes the image is
+    base64 encoded in the "contents" field and allows a "patch_size" integer
+    field to choose the patch size."""
+    patch_size = int(req.json.get('patch_size', 32))
+    contents = re.sub(r'data:image/.+;base64', '', request.json['contents'])
+    contents = base64.b64decode(contents)
+    img_bytes, format = process_image(io.BytesIO(contents), patch_size)
+    contents = base64.b64encode(img_bytes.getvalue()).decode('utf-8')
+    contents = 'data:image/{};charset=utf-8;base64,{}'.format(
+        format.lower(), contents)
+    return {'contents': contents, 'filename': format, 'mime_type': format}
+
+
 @app.route('/caterise', methods=['POST'])
 def process():
     """Take an encoded image, spray cats all over it, return"""
-    if not request.files:
-        app.logger.info('no files found in post, treating as json')
-        contents = re.sub(r'data:image/.+;base64', '',
-                          request.json['contents'])
-        contents = base64.b64decode(contents)
-        img_bytes, format = process_image(io.BytesIO(contents))
-        contents = base64.b64encode(img_bytes.getvalue()).decode('utf-8')
-        contents = 'data:image/{};charset=utf-8;base64,{}'.format(
-            format.lower(), contents)
-        return flask.jsonify({
-            'contents': contents,
-            'filename': format,
-            'mime_type': format
-        })
+    if request.json:
+        return flask.jsonify(process_json(request))
+    return flask.jsonify({'message': 'lol noo'})
 
-    img_bytes, format = process_image(request.files['data'])
 
-    return flask.send_file(
-        img_bytes,
-        mimetype=Image.MIME[format],
-        attachment_filename=request.files['data'].filename,
-        as_attachment=True)
+def cf_process(request):
+    """the entrypoint for a cloud-function http request"""
+    if request.method == "OPTIONS":
+        # allow CORS
+        headers = {
+            'Access-Control-Allow-Origin': '*',  # TODO(pfcm): be more precise?
+            'Access-Control-Allow-Methods': 'GET',
+            'Access-Control-Allow-Headers': 'Content-Type',
+            'Access-Control-Allow-Max-Age': '3600'
+        }
+        return ('', 204, headers)
+    headers = {'Access-Control-Allow-Origin': '*'}
+    return (json.dumps(process_json(request)), 200, headers)
 
 
 if __name__ == '__main__':
+    app = create_app(Flask)
     app.run(debug=True, host='0.0.0.0')
