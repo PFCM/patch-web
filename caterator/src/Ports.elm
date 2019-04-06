@@ -7,11 +7,12 @@ type alias ImagePortData =
     { contents : String, filename : String }
 
 
-imageToValue : ImagePortData -> Encode.Value
-imageToValue v =
+imageToValue : Int -> ImagePortData -> Encode.Value
+imageToValue s v =
     Encode.object
         [ ( "contents", Encode.string v.contents )
         , ( "filename", Encode.string v.filename )
+        , ( "patch_size", Encode.int s )
         ]
 
 
