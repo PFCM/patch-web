@@ -35,7 +35,7 @@ def index_from_config(conf, patch_size):
         'post': 2,
         'skip_optimized_index': 1
     }
-    query_params = {'efSearch': 100}
+    query_params = {'efSearch': 1000}
     loader = partial(cats, conf['cats_path'], patch_size)
     with img_index(
             index_path,
@@ -80,6 +80,9 @@ def create_app(app_cls):
     application = app_cls(__name__)
     application.config.update(config)
     return application
+
+
+app = create_app(Flask)
 
 
 def _slice_params(axis, factor):
