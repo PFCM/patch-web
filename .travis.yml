@@ -1,4 +1,7 @@
-sudo:         false
+dist:         xenial
+language:     python
+python:
+  - 3.7
 services:
   - docker
 
@@ -11,4 +14,8 @@ branches:
 jobs:
   include:
     - stage:  deploy
-      script: cd patchserver && ./cf-deploy.sh
+      script:
+        - gcloud components update
+        - cat ${GCP_ACCOUNT_CREDENTIALS} > creds.json
+        - gcloud auth activate_service_account --keyfile=creds.json
+        - cd patchserver && ./cf-deploy.sh
