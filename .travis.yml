@@ -1,0 +1,14 @@
+sudo:         false
+services:
+  - docker
+
+git:
+  depth:      1
+
+branches:
+  only:
+    - master
+jobs:
+  include:
+    - stage:  deploy
+      script: cd patchserver && ./cf-deploy.sh
