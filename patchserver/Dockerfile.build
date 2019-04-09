@@ -2,7 +2,7 @@
 # hopefully slim is compatible enough with ubuntu 18.04
 FROM python:3.7-slim
 
-RUN apt-get update && apt-get install -y git g++ zip
+RUN apt-get -qq update && apt-get -qq install -y git g++ zip
 
 RUN mkdir /build
 COPY . /build
