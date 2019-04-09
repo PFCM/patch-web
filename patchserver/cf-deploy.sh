@@ -23,4 +23,5 @@ gcloud functions deploy ${FUNCTION_NAME} \
   --runtime ${RUNTIME} \
   --project ${PROJECT_NAME} \
   --source gs://${SOURCE_BUCKEt}/package.zip \
-  --trigger-http
+  --trigger-http \
+  --set-env-vars=LD_LIBRARY_PATH=/user_code/:/env/local/lib
