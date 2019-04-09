@@ -12,4 +12,4 @@ RUN find /build -name "*-info" -type d -exec rm -rdf {} +
 RUN find /build -name "tests" -type d -exec rm -rdf {} +
 RUN rm -rdf /build/numpy/doc
 
-RUN cd /build && zip -r9 /tmp/package.zip *
+RUN cd /build && zip -q -r9 /tmp/package.zip *
