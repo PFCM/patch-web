@@ -22,5 +22,5 @@ gcloud functions deploy ${FUNCTION_NAME} \
   --entry-point ${ENTRY_POINT} \
   --runtime ${RUNTIME} \
   --project ${PROJECT_NAME} \
-  --source ${SOURCE_BUCKEt}/package.zip \
+  --source gs://${SOURCE_BUCKEt}/package.zip \
   --trigger-http
