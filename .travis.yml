@@ -8,7 +8,7 @@ git:
   depth:       1
 cache:
   directories:
-    - "$HOME/google-cloud-sdk/"
+  - "$HOME/google-cloud-sdk/"
 branches:
   only:
   - master
@@ -18,7 +18,9 @@ jobs:
     script:
     - openssl aes-256-cbc -K $encrypted_43783f5f9db0_key -iv $encrypted_43783f5f9db0_iv
       -in creds.json.enc -out creds.json -d
-    - if [ ! -d "$HOME/google-cloud-sdk/bin" ]; then rm -rf $HOME/google-cloud-sdk; export CLOUDSDK_CORE_DISABLE_PROMPTS=1; curl https://sdk.cloud.google.com | bash; fi
+    - if [ ! -d "$HOME/google-cloud-sdk/bin" ]; then rm -rf $HOME/google-cloud-sdk;
+      export CLOUDSDK_CORE_DISABLE_PROMPTS=1; curl https://sdk.cloud.google.com |
+      bash; fi
     - export PATH="${HOME}/google-cloud-sdk/bin":$PATH
     - which gcloud
     - gcloud components update
