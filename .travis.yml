@@ -22,5 +22,5 @@ jobs:
     - export PATH="${HOME}/google-cloud-sdk/bin":$PATH
     - which gcloud
     - gcloud components update
-    - gcloud auth activate-service-account --keyfile=creds.json
+    - gcloud auth activate-service-account --key-file=creds.json
     - cd patchserver && ./cf-deploy.sh
