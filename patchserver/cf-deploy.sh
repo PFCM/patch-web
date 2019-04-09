@@ -14,8 +14,10 @@ docker build -t cf-build -f Dockerfile.build .
 docker create -ti --name build cf-build bash
 docker cp build:/tmp/package.zip ./package.zip
 
+echo "===uploading==="
 gsutil cp package.zip gs://${SOURCE_BUCKET}/
 
+echo "===deploying==="
 gcloud functions deploy ${FUNCTION_NAME} \
   --entry-point ${ENTRY_POINT} \
   --runtime ${RUNTIME} \
