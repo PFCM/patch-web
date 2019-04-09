@@ -206,11 +206,15 @@ module.exports = {
           // module system.
           {
             loader: require.resolve('string-replace-loader'),
-            query: {
+            options: {multiple: [{
               search: '%PUBLIC_URL%',
               replace: publicUrl,
               flags: 'g'
-            }
+            }, {
+              search: '%BACKEND_URL%',
+              replace: backendUrl,
+              flags: 'g'
+            }]}
           },
           {
             // Use the local installation of elm-make
