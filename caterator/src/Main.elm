@@ -99,7 +99,7 @@ requestCattery model =
                     Http.jsonBody << imageToValue model.catSize <| inp
 
                 request =
-                    Http.post "http://%BACKEND_URL%/caterise" body imageDecoder
+                    Http.post "%BACKEND_URL%" body imageDecoder
             in
             Http.send CatHappened request
 
