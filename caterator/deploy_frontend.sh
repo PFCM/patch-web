@@ -9,4 +9,4 @@ npm install
 npm install -g create-elm-app
 elm-app build
 
-gsutil rsync build/ gs://${SOURCE_BUCKET}/
+gsutil -m rsync build/ gs://${SOURCE_BUCKET}/
