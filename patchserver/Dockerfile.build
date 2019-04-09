@@ -8,6 +8,7 @@ RUN mkdir /build
 COPY . /build
 RUN pip install pybind11
 RUN pip install -t /build -r /build/requirements.txt
+RUN rm /build/requirements.txt
 RUN find /build -name "*-info" -type d -exec rm -rdf {} +
 RUN find /build -name "tests" -type d -exec rm -rdf {} +
 RUN rm -rdf /build/numpy/doc
