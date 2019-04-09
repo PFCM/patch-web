@@ -1,21 +1,20 @@
-dist:         xenial
-language:     python
+dist:       xenial
+language:   python
 python:
-  - 3.7
+- 3.7
 services:
-  - docker
-
+- docker
 git:
-  depth:      1
-
+  depth:    1
 branches:
   only:
-    - master
+  - master
 jobs:
   include:
-    - stage:  deploy
-      script:
-        - gcloud components update
-        - cat ${GCP_ACCOUNT_CREDENTIALS} > creds.json
-        - gcloud auth activate_service_account --keyfile=creds.json
-        - cd patchserver && ./cf-deploy.sh
+  - stage:  deploy
+    script:
+    - openssl aes-256-cbc -K $encrypted_43783f5f9db0_key -iv $encrypted_43783f5f9db0_iv
+      -in creds.json.enc -out creds.json -d
+    - gcloud components update
+    - gcloud auth activate_service_account --keyfile=creds.json
+    - cd patchserver && ./cf-deploy.sh
