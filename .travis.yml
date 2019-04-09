@@ -37,4 +37,4 @@ jobs:
     - which gcloud
     - gcloud components update
     - gcloud auth activate-service-account --key-file=creds.json
-    - if [ -z $(git diff --name-only HEAD HEAD~1 caterator) ]; then cd caterator && ./deploy_frontend.sh; fi
+    - cd caterator && ./deploy_frontend.sh
