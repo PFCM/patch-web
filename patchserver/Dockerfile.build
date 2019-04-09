@@ -6,7 +6,7 @@ RUN apt-get -qq update && apt-get -qq install -y git g++ zip
 
 RUN mkdir /build
 COPY . /build
-RUN cp $(python -c 'from distutils import sysconfig; v = sysconfig.get_config_vars(); print("{}/{}".format(v["LIBDIR"], v["LDLIBRARY"]))') /build
+RUN cp $(python -c 'from distutils import sysconfig; v = sysconfig.get_config_vars(); print("{}/{}".format(v["LIBDIR"], v["LDLIBRARY"]))') /build/libpython3.7m.so.1.0
 RUN pip install pybind11
 RUN pip install -t /build -r /build/requirements.txt
 RUN rm /build/requirements.txt

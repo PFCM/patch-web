@@ -3,7 +3,7 @@
 # builds the frontend and deploys to gcs
 set -ev
 
-SOURCE_BUCKET=${GCP_SOURCE_BUCKET}
+SOURCE_BUCKET=${GCP_WEB_BUCKET}
 
 npm install
 npm install -g create-elm-app
