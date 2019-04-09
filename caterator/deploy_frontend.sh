@@ -5,7 +5,6 @@ set -ev
 
 SOURCE_BUCKET=${GCP_SOURCE_BUCKET}
 
-cd caterator
 npm install
 elm-app build
 
