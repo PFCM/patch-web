@@ -6,9 +6,10 @@ RUN apt-get -qq update && apt-get -qq install -y git g++ zip
 
 RUN mkdir /build
 COPY . /build
+RUN cp $(python -c 'from distutils import sysconfig; v = sysconfig.get_config_vars(); print("{}/{}".format(v["LIBDIR"], v["LDLIBRARY"]))') /build
 RUN pip install pybind11
 RUN pip install -t /build -r /build/requirements.txt
-RUN cp $(python -c 'from distutils import sysconfig; v = sysconfig.get_config_vars(); print("{}/{}".format(v["LIBDIR"], v["LDLIBRARY"]))') build
+RUN rm /build/requirements.txt
 RUN find /build -name "*-info" -type d -exec rm -rdf {} +
 RUN find /build -name "tests" -type d -exec rm -rdf {} +
 RUN rm -rdf /build/numpy/doc
