@@ -24,4 +24,4 @@ gcloud functions deploy ${FUNCTION_NAME} \
   --project ${PROJECT_NAME} \
   --source gs://${SOURCE_BUCKET}/package.zip \
   --trigger-http \
-  --set-env-vars=LD_LIBRARY_PATH=/user_code/:/env/local/lib
+  --set-env-vars=LD_LIBRARY_PATH=/user_code/:/env/local/lib/python3.7
