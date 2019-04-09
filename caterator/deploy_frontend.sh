@@ -6,6 +6,7 @@ set -ev
 SOURCE_BUCKET=${GCP_SOURCE_BUCKET}
 
 npm install
+npm install create-elm-app
 elm-app build
 
 gsutil rsync build/ gs://${SOURCE_BUCKET}/
