@@ -55,7 +55,7 @@ def _get_config_from_env():
     levels = os.getenv('LEVELS', '2,4,8,16,32,64')
     levels = [int(l) for l in levels.split(',')]
     return {
-        'cats_path': os.getenv('CATS_PATH', '/tmp/cats/raw'),
+        'cats_path': os.getenv('CATS_PATH', '/tmp/cats/indices'),
         'index_path': os.getenv('INDEX_PATH', '/tmp/cats/indices'),
         'levels': levels
     }
