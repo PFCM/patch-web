@@ -79,18 +79,10 @@ app = create_app(Flask)
 gcs_client = storage.Client()
 
 
-def _download_bucket_to(bucket_name, path):
-    """download the contents of a gcs bucket to a given directory."""
-    client = storage.Client()
-    bucket = client.bucket(bucket_name)
-    for blob in bucket.list_objects():
-        fname = os.path.join(path, blob.name)
-        blob.download_to_filename(fname)
-
-
 def _get_blob(bucket, obj, path):
     """attempt to get a blob from a bucket and write it into path"""
     app.logger.info('attempting to get gs://%s/%s to %s', bucket, obj, path)
+    os.makedirs(os.path.dirname(os.path.join(path, obj)), exist_ok=True)
     blob = storage.Blob(obj, bucket)
     blob.download_to_filename(os.path.join(path, obj), gcs_client)
 
