@@ -229,6 +229,9 @@ view model =
                     if isNothing model.imageInputData then
                         "%PUBLIC_URL%/cats.gif"
 
+                    else if model.waiting then
+                        "%PUBLIC_URL%/loading.gif"
+
                     else
                         "%PUBLIC_URL%/baseline-photo-24px.svg"
                 , errorDiv model.error
