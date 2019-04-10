@@ -16,10 +16,41 @@ from functools import partial
 import flask
 import numpy as np
 from flask import Flask, request
+from google.cloud import storage
 from PIL import Image, ImageSequence
 
 from patchies.index import img_index
 from patchies.pipeline import cats, make_mosaic
+
+gcs_client = storage.Client()
+
+
+def _download_bucket_to(bucket_name, path):
+    """download the contents of a gcs bucket to a given directory."""
+    client = storage.Client()
+    bucket = client.bucket(bucket_name)
+    for blob in bucket.list_objects():
+        fname = os.path.join(path, blob.name)
+        blob.download_to_filename(fname)
+
+
+def _get_blob(bucket, obj, path):
+    """attempt to get a blob from a bucket and write it into path"""
+    app.logger.info('attempting to get gs://%s/%s to %s', bucket, obj, path)
+    blob = storage.Blob(obj, bucket)
+    blob.download_to_filename(os.path.join(path, obj), gcs_client)
+
+
+def _get_cats(patch_size):
+    """try and get a level of cats"""
+    bucket = os.getenv('GCP_CATS_BUCKET')
+    if not bucket:
+        app.logger.error('no cats bucket set 😿')
+        raise ValueError('no cats bucket set 😿')
+    cat_dir = os.getenv('CATS_PATH', '/tmp/cats/raw')
+    idx_dir = os.getenv('INDEX_PATH', '/tmp/cats/indices')
+    _get_blob(bucket, 'cats-{}-index.bin'.format(patch_size), idx_dir)
+    _get_blob(bucket, 'cats-{}.npy'.format(patch_size), cat_dir)
 
 
 @contextlib.contextmanager
@@ -28,6 +59,9 @@ def index_from_config(conf, patch_size):
     parameters."""
     index_path = os.path.join(conf['index_path'],
                               'cats-{}-index.bin'.format(patch_size))
+    if not os.path.exists(index_path):
+        _get_cats(patch_size)
+
     creation_params = {
         'M': 50,
         'indexThreadQty': multiprocessing.cpu_count(),
@@ -51,8 +85,8 @@ def _get_config_from_env():
     levels = os.getenv('LEVELS', '2,4,8,16,32,64')
     levels = [int(l) for l in levels.split(',')]
     return {
-        'cats_path': os.getenv('CATS_PATH', '/cats/raw'),
-        'index_path': os.getenv('INDEX_PATH', '/cats/indices'),
+        'cats_path': os.getenv('CATS_PATH', '/tmp/cats/raw'),
+        'index_path': os.getenv('INDEX_PATH', '/tmp/cats/indices'),
         'levels': levels
     }
 
