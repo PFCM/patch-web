@@ -118,7 +118,7 @@ imageInputId =
 
 sizes : List Int
 sizes =
-    [ 8, 16, 32 ]
+    [ 8, 16, 32, 64 ]
 
 
 radio : String -> msg -> Html msg
@@ -226,7 +226,7 @@ view model =
                 [ style "display" "flex", style "height" "25em" ]
                 [ imagePreview model.imageInputData "%PUBLIC_URL%/jeff.gif"
                 , imagePreview model.imageResultData <|
-                    if isNothing model.imageInputData then
+                    if isNothing model.imageInputData && not model.waiting then
                         "%PUBLIC_URL%/cats.gif"
 
                     else if model.waiting then
