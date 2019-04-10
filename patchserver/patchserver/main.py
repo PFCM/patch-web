@@ -97,7 +97,7 @@ def _get_blob(bucket, obj, path):
 
 def _get_cats(patch_size):
     """try and get a level of cats"""
-    bucket = os.getenv('GCP_CATS_BUCKET')
+    bucket = os.getenv('CATS_BUCKET')
     if not bucket:
         app.logger.error('no cats bucket set 😿')
         raise ValueError('no cats bucket set 😿')
