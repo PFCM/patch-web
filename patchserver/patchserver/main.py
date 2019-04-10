@@ -39,7 +39,7 @@ def index_from_config(conf, patch_size):
         'post': 2,
         'skip_optimized_index': 1
     }
-    query_params = {'efSearch': 1000}
+    query_params = {'efSearch': 200}
     loader = partial(cats, conf['cats_path'], patch_size)
     with img_index(
             index_path,
