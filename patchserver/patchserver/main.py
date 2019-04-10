@@ -83,7 +83,7 @@ def _get_blob(bucket, obj, path):
     """attempt to get a blob from a bucket and write it into path"""
     app.logger.info('attempting to get gs://%s/%s to %s', bucket, obj, path)
     os.makedirs(os.path.dirname(os.path.join(path, obj)), exist_ok=True)
-    blob = storage.Blob(obj, bucket)
+    blob = storage.Bucket(bucket).blob(obj)
     blob.download_to_filename(os.path.join(path, obj), gcs_client)
 
 
