@@ -25,4 +25,5 @@ gcloud functions deploy ${FUNCTION_NAME} \
   --source gs://${SOURCE_BUCKET}/package.zip \
   --trigger-http \
   --set-env-vars=LD_LIBRARY_PATH=/user_code/:/env/local/lib/python3.7,CATS_BUCKET=${GCP_CATS_BUCKET} \
+  --timeout 540s \
   --memory 2048
