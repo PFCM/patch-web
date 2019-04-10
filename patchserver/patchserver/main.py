@@ -93,7 +93,7 @@ def _get_cats(patch_size):
     if not bucket:
         app.logger.error('no cats bucket set 😿')
         raise ValueError('no cats bucket set 😿')
-    cat_dir = os.getenv('CATS_PATH', '/tmp/cats/raw')
+    cat_dir = os.getenv('CATS_PATH', '/tmp/cats/indices')
     idx_dir = os.getenv('INDEX_PATH', '/tmp/cats/indices')
     _get_blob(bucket, 'cats-{}-index.bin'.format(patch_size), idx_dir)
     _get_blob(bucket, 'cats-{}.npy'.format(patch_size), cat_dir)
