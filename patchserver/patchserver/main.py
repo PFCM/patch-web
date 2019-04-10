@@ -68,7 +68,7 @@ def create_app(app_cls):
     config = _get_config_from_env()
     # make sure it errors out if someone's being unpleasant
     warnings.simplefilter('error', Image.DecompressionBombWarning)
-    _check_data(config)
+    # _check_data(config)
     application = app_cls(__name__)
     application.config.update(config)
     return application
