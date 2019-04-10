@@ -22,36 +22,6 @@ from PIL import Image, ImageSequence
 from patchies.index import img_index
 from patchies.pipeline import cats, make_mosaic
 
-gcs_client = storage.Client()
-
-
-def _download_bucket_to(bucket_name, path):
-    """download the contents of a gcs bucket to a given directory."""
-    client = storage.Client()
-    bucket = client.bucket(bucket_name)
-    for blob in bucket.list_objects():
-        fname = os.path.join(path, blob.name)
-        blob.download_to_filename(fname)
-
-
-def _get_blob(bucket, obj, path):
-    """attempt to get a blob from a bucket and write it into path"""
-    app.logger.info('attempting to get gs://%s/%s to %s', bucket, obj, path)
-    blob = storage.Blob(obj, bucket)
-    blob.download_to_filename(os.path.join(path, obj), gcs_client)
-
-
-def _get_cats(patch_size):
-    """try and get a level of cats"""
-    bucket = os.getenv('GCP_CATS_BUCKET')
-    if not bucket:
-        app.logger.error('no cats bucket set 😿')
-        raise ValueError('no cats bucket set 😿')
-    cat_dir = os.getenv('CATS_PATH', '/tmp/cats/raw')
-    idx_dir = os.getenv('INDEX_PATH', '/tmp/cats/indices')
-    _get_blob(bucket, 'cats-{}-index.bin'.format(patch_size), idx_dir)
-    _get_blob(bucket, 'cats-{}.npy'.format(patch_size), cat_dir)
-
 
 @contextlib.contextmanager
 def index_from_config(conf, patch_size):
@@ -91,18 +61,6 @@ def _get_config_from_env():
     }
 
 
-def _check_data(config):
-    """Check the pre-processed data exists where it should (just by asking for
-    it)"""
-    logging.info('checking that the data is ok')
-    logging.info('cats should be in `%s`', config['cats_path'])
-    logging.info('indices should be in `%s`', config['index_path'])
-    for patch_size in config['levels']:
-        logging.info('checking level %d', patch_size)
-        with index_from_config(config, patch_size) as (_, data):
-            logging.info('~~~~~~~shape %s', data.shape)
-
-
 def create_app(app_cls):
     """check the preprocessed data is all present and correct and then make the
     app. Also injects the config."""
@@ -117,6 +75,48 @@ def create_app(app_cls):
 
 
 app = create_app(Flask)
+
+gcs_client = storage.Client()
+
+
+def _download_bucket_to(bucket_name, path):
+    """download the contents of a gcs bucket to a given directory."""
+    client = storage.Client()
+    bucket = client.bucket(bucket_name)
+    for blob in bucket.list_objects():
+        fname = os.path.join(path, blob.name)
+        blob.download_to_filename(fname)
+
+
+def _get_blob(bucket, obj, path):
+    """attempt to get a blob from a bucket and write it into path"""
+    app.logger.info('attempting to get gs://%s/%s to %s', bucket, obj, path)
+    blob = storage.Blob(obj, bucket)
+    blob.download_to_filename(os.path.join(path, obj), gcs_client)
+
+
+def _get_cats(patch_size):
+    """try and get a level of cats"""
+    bucket = os.getenv('GCP_CATS_BUCKET')
+    if not bucket:
+        app.logger.error('no cats bucket set 😿')
+        raise ValueError('no cats bucket set 😿')
+    cat_dir = os.getenv('CATS_PATH', '/tmp/cats/raw')
+    idx_dir = os.getenv('INDEX_PATH', '/tmp/cats/indices')
+    _get_blob(bucket, 'cats-{}-index.bin'.format(patch_size), idx_dir)
+    _get_blob(bucket, 'cats-{}.npy'.format(patch_size), cat_dir)
+
+
+def _check_data(config):
+    """Check the pre-processed data exists where it should (just by asking for
+    it)"""
+    logging.info('checking that the data is ok')
+    logging.info('cats should be in `%s`', config['cats_path'])
+    logging.info('indices should be in `%s`', config['index_path'])
+    for patch_size in config['levels']:
+        logging.info('checking level %d', patch_size)
+        with index_from_config(config, patch_size) as (_, data):
+            logging.info('~~~~~~~shape %s', data.shape)
 
 
 def _slice_params(axis, factor):
