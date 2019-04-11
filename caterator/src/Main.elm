@@ -11,6 +11,7 @@ import Maybe as M
 import Ports
     exposing
         ( ImagePortData
+        , fileContentFailed
         , fileContentRead
         , fileSelected
         , imageToValue
@@ -28,6 +29,7 @@ type alias Model =
     , imageResultData : Maybe ImagePortData
     , error : Maybe Http.Error
     , waiting : Bool
+    , failed : Bool
     }
 
 
@@ -38,6 +40,7 @@ init _ =
       , imageResultData = Nothing
       , error = Nothing
       , waiting = False
+      , failed = False
       }
     , Cmd.none
     )
@@ -51,6 +54,7 @@ type Msg
     = ChangeCatSize Int
     | ImageSelected
     | ImageRead ImagePortData
+    | ImageNotRead String
     | MakeCatHappen
     | CatHappened (Result Http.Error ImagePortData)
 
@@ -65,10 +69,13 @@ update msg model =
             ( model, fileSelected imageInputId )
 
         ImageRead newData ->
-            ( { model | imageInputData = Just newData }, Cmd.none )
+            ( { model | imageInputData = Just newData, failed = False }, Cmd.none )
+
+        ImageNotRead _ ->
+            ( { model | waiting = False, failed = True }, Cmd.none )
 
         MakeCatHappen ->
-            ( { model | waiting = True }, requestCattery model )
+            ( { model | waiting = True, imageResultData = Nothing }, requestCattery model )
 
         CatHappened res ->
             case res of
@@ -224,13 +231,18 @@ view model =
             [ sizeRadios sizes
             , div
                 [ style "display" "flex", style "height" "25em" ]
-                [ imagePreview model.imageInputData "%PUBLIC_URL%/jeff.gif"
-                , imagePreview model.imageResultData <|
-                    if isNothing model.imageInputData && not model.waiting then
-                        "%PUBLIC_URL%/cats.gif"
+                [ imagePreview model.imageInputData <|
+                    if model.failed then
+                        "%PUBLIC_URL%/plz.gif"
 
-                    else if model.waiting then
+                    else
+                        "%PUBLIC_URL%/jeff.gif"
+                , imagePreview model.imageResultData <|
+                    if model.waiting then
                         "%PUBLIC_URL%/loading.gif"
+
+                    else if isNothing model.imageInputData then
+                        "%PUBLIC_URL%/cats.gif"
 
                     else
                         "%PUBLIC_URL%/baseline-photo-24px.svg"
@@ -279,7 +291,10 @@ errorDiv err =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    fileContentRead ImageRead
+    Sub.batch
+        [ fileContentRead ImageRead
+        , fileContentFailed ImageNotRead
+        ]
 
 
 

@@ -1,4 +1,4 @@
-port module Ports exposing (ImagePortData, fileContentRead, fileSelected, imageToValue)
+port module Ports exposing (ImagePortData, fileContentFailed, fileContentRead, fileSelected, imageToValue)
 
 import Json.Encode as Encode
 
@@ -20,3 +20,6 @@ port fileSelected : String -> Cmd msg
 
 
 port fileContentRead : (ImagePortData -> msg) -> Sub msg
+
+
+port fileContentFailed : (String -> msg) -> Sub msg
