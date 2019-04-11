@@ -118,7 +118,7 @@ imageInputId =
 
 sizes : List Int
 sizes =
-    [ 8, 16, 32, 64 ]
+    [ 8, 16, 32 ]
 
 
 radio : String -> msg -> Html msg
