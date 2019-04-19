@@ -10,6 +10,21 @@ h1 {
 }
 
 img {
-  margin: 20px 0;
-  max-width: 200px;
+  /* margin: 20px 0; */
+  width: 100%;
+  object-fit: scale-down;
+  /* max-width: 200px; */
+}
+
+a {
+  display: flex;
+  height: 100%;
+  width: 100%;
+}
+
+.preview-wrapper {
+  width: 50%;
+  display: flex;
+  height: auto;
+  justify-content: center;
 }

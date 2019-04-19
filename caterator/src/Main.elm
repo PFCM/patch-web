@@ -193,21 +193,15 @@ imagePreview imgData default =
             M.withDefault "~c a t~" << M.map .filename <| imgData
     in
     div
-        [ class "preview-wrapper"
-        , style "width" "50%"
-        , style "overflow" "hidden"
-        , style "display" "flex"
-        , style "justify-content" "center"
-        , style "align-items" "center"
-        ]
-        [ img
-            [ src imgSrc
-            , title imgTitle
-            , style "object-fit" "scale-down"
-            , style "min-width" "100%"
-            , style "min-height" "100%"
+        [ class "preview-wrapper" ]
+        -- TODO(pfcm): probably not a jpg? Might be too late if no .filename
+        [ a [ download << M.withDefault "cat.jpg" << M.map .filename <| imgData ]
+            [ img
+                [ src imgSrc
+                , title imgTitle
+                ]
+                []
             ]
-            []
         ]
 
 
