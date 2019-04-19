@@ -23,7 +23,7 @@ jobs:
       bash; fi
     - export PATH="${HOME}/google-cloud-sdk/bin":$PATH
     - which gcloud
-    - gcloud components update
+    - gcloud components update --quiet
     - gcloud auth activate-service-account --key-file=creds.json
     - if [ -z $(git diff --name-only HEAD HEAD~1 patchserver) ]; then cd patchserver && ./cf-deploy.sh; fi
   - stage:     deploy
@@ -35,6 +35,6 @@ jobs:
         bash; fi
     - export PATH="${HOME}/google-cloud-sdk/bin":$PATH
     - which gcloud
-    - gcloud components update
+    - gcloud components update --quiet
     - gcloud auth activate-service-account --key-file=creds.json
     - cd caterator && ./deploy_frontend.sh
